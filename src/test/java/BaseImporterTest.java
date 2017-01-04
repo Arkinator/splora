@@ -1,5 +1,6 @@
 import com.github.arkinator.splora.importer.SploraImporter;
 import com.github.arkinator.splora.model.SploraClass;
+import com.github.arkinator.splora.model.SploraPackage;
 import com.github.arkinator.splora.model.SploraProject;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,10 +22,22 @@ public class BaseImporterTest {
 
     @Test
     public void shouldReadInClasses() {
-        assertThat(project.getClasses())
+        assertThat(project.getClassList())
                 .isNotEmpty()
-        .hasAtLeastOneElementOfType(SploraClass.class)
-        .filteredOn("className","SploraImporter")
-        .hasSize(1);
+                .hasAtLeastOneElementOfType(SploraClass.class)
+                .filteredOn("className","SploraImporter")
+                .hasSize(1);
+    }
+
+    @Test
+    public void shouldReadInPackages() {
+        assertThat(project.getPackages())
+                .isNotEmpty()
+                .hasAtLeastOneElementOfType(SploraPackage.class)
+                .filteredOn("packageName","com.github.arkinator.splora.model")
+                .hasSize(1);
+        assertThat(project.getPackage("com.github.arkinator.splora.model").getClasses())
+                .filteredOn("className","SploraPackage")
+                .hasSize(1);
     }
 }

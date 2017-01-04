@@ -39,7 +39,7 @@ public class SploraImporter {
     }
 
     private SploraClass buildSploraClass(Path path) {
-        return new SploraClass(path);
+        return SploraClass.buildFromPath(path);
     }
 
     private class SploraBuilderException extends RuntimeException {
