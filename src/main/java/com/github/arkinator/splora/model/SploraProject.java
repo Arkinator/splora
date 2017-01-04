@@ -2,10 +2,7 @@ package com.github.arkinator.splora.model;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SploraProject {
@@ -45,6 +42,27 @@ public class SploraProject {
         return classes.get(name);
     }
 
+    public void deleteNonSpringMembers() {
+        Iterator<SploraClass> classIterator = classList.iterator();
+        while (classIterator.hasNext()) {
+            SploraClass target = classIterator.next();
+            if (!classIsUsed(target) && target.getDependencies().size() == 0) {
+                SploraPackage sploraPackage = packages.get(target.getPackageName());
+                classIterator.remove();
+                classes.remove(target);
+                sploraPackage.getClasses().remove(target);
+                if (sploraPackage.getClasses().isEmpty()) {
+                    packagesList.remove(sploraPackage);
+                    packages.remove(sploraPackage);
+                }
+            }
+        }
+    }
+
+    private boolean classIsUsed(SploraClass target) {
+        return !getClassesDependingOn(target.getClassName()).isEmpty();
+    }
+
     public String exportToPlantUml() {
         StringBuilder result = new StringBuilder();
         result.append("@startuml\n");
@@ -56,8 +74,8 @@ public class SploraProject {
 
     private String writeDependencies(SploraClass cl) {
         return cl.getDependencies().stream()
-                .map(dp -> "\t\t[" + cl.getClassName() +"] -"+getArrow(cl, dp)+"> ["+dp+"]")
-                .collect(Collectors.joining("\n"))+"\n";
+                .map(dp -> "\t\t[" + cl.getClassName() + "] -" + getArrow(cl, dp) + "> [" + dp + "]")
+                .collect(Collectors.joining("\n")) + "\n";
     }
 
     private String getArrow(SploraClass class1, String class2Name) {
@@ -65,24 +83,37 @@ public class SploraProject {
             return "";
         int package1Ordinal = getOrdinalForPackage(class1.getPackageName());
         int package2Ordinal = getOrdinalForPackage(getClass(class2Name).getPackageName());
-        return StringUtils.repeat("-",package1Ordinal - package2Ordinal);
+        return StringUtils.repeat("-", package1Ordinal - package2Ordinal);
     }
 
     private String packageToString(SploraPackage pack) {
-        String result = "\tpackage \""+pack.getPackageName()+"\" {\n";
+        String result = "\tpackage \"" + pack.getPackageName() + "\" {\n";
         result += pack.getClasses().stream()
-                .map(cl -> "\t\t[" + cl.getClassName()+"]")
+                .map(cl -> "\t\t[" + cl.getClassName() + "]")
                 .collect(Collectors.joining("\n"));
         return result + "\n\t}\n\n";
     }
 
     private int getOrdinalForPackage(String packageName) {
         int ordinal = 0;
-        for(SploraPackage pack : packagesList){
+        for (SploraPackage pack : packagesList) {
             if (pack.getPackageName().equals(packageName))
                 return ordinal;
             ordinal++;
         }
         return -1;
+    }
+
+    public List<String> getClassesDependingOn(String className) {
+        List<String> result = new ArrayList<>();
+        for(SploraClass sploraClass : classList) {
+            if (sploraClass.getDependencies().stream().filter(dep -> className.equals(dep)).count() > 0)
+                result.add(sploraClass.getClassName());
+        }
+        return result;
+    }
+
+    public void deleteClass(String indexManagerController) {
+
     }
 }
